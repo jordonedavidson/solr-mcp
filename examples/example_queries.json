@@ -1,0 +1,220 @@
+{
+  "description": "Example MCP tool calls for SOLR MCP Server",
+  "examples": [
+    {
+      "name": "Basic Search",
+      "description": "Simple text search with pagination",
+      "tool": "search",
+      "arguments": {
+        "query": "machine learning algorithms",
+        "rows": 10,
+        "start": 0
+      }
+    },
+    {
+      "name": "Advanced Search with Filtering",
+      "description": "Search with field selection, filters, and sorting",
+      "tool": "advanced_search",
+      "arguments": {
+        "query": "artificial intelligence",
+        "fields": ["id", "title", "content", "author", "published_date"],
+        "filters": [
+          "category:technology",
+          "published_date:[2020-01-01T00:00:00Z TO *]",
+          "status:published"
+        ],
+        "sort": "published_date desc",
+        "rows": 20,
+        "start": 0
+      }
+    },
+    {
+      "name": "Faceted Search for Navigation",
+      "description": "Search with facets for building navigation interfaces",
+      "tool": "faceted_search",
+      "arguments": {
+        "query": "*:*",
+        "facet_fields": ["category", "author", "year", "tags"],
+        "filters": ["status:published"],
+        "rows": 10
+      }
+    },
+    {
+      "name": "Search with Highlighting",
+      "description": "Search with highlighted results for better user experience",
+      "tool": "search_with_highlighting",
+      "arguments": {
+        "query": "deep learning neural networks",
+        "highlight_fields": ["title", "content", "abstract"],
+        "rows": 15,
+        "start": 0
+      }
+    },
+    {
+      "name": "Boolean Query Search",
+      "description": "Advanced boolean query with operators",
+      "tool": "advanced_search",
+      "arguments": {
+        "query": "(machine AND learning) OR (artificial AND intelligence) NOT spam",
+        "fields": ["title", "content", "keywords"],
+        "rows": 25
+      }
+    },
+    {
+      "name": "Field-Specific Search",
+      "description": "Search within specific fields",
+      "tool": "advanced_search",
+      "arguments": {
+        "query": "title:\"data science\" OR content:\"big data\"",
+        "fields": ["id", "title", "content", "score"],
+        "sort": "score desc",
+        "rows": 15
+      }
+    },
+    {
+      "name": "Wildcard and Fuzzy Search",
+      "description": "Search with wildcards and fuzzy matching",
+      "tool": "advanced_search",
+      "arguments": {
+        "query": "comput* AND (analytic~ OR analytics)",
+        "rows": 20
+      }
+    },
+    {
+      "name": "Date Range Search",
+      "description": "Search within specific date ranges",
+      "tool": "advanced_search",
+      "arguments": {
+        "query": "*:*",
+        "filters": [
+          "published_date:[2023-01-01T00:00:00Z TO 2023-12-31T23:59:59Z]",
+          "category:(technology OR science)"
+        ],
+        "sort": "published_date desc",
+        "rows": 30
+      }
+    },
+    {
+      "name": "Multi-Field Faceted Search",
+      "description": "Complex faceted search with multiple dimensions",
+      "tool": "faceted_search",
+      "arguments": {
+        "query": "python OR java OR javascript",
+        "facet_fields": ["programming_language", "difficulty_level", "category", "author"],
+        "filters": [
+          "content_type:tutorial",
+          "rating:[4 TO *]"
+        ],
+        "rows": 12
+      }
+    },
+    {
+      "name": "Get Spelling Suggestions",
+      "description": "Get spelling corrections for misspelled queries",
+      "tool": "get_suggestions",
+      "arguments": {
+        "query": "machne lerning algoritms",
+        "count": 5
+      }
+    },
+    {
+      "name": "Schema Introspection",
+      "description": "Get available fields in the SOLR schema",
+      "tool": "get_schema_fields",
+      "arguments": {}
+    },
+    {
+      "name": "Collection Statistics",
+      "description": "Get basic statistics about the collection",
+      "tool": "get_collection_stats",
+      "arguments": {}
+    },
+    {
+      "name": "Health Check",
+      "description": "Check SOLR connection health",
+      "tool": "ping_solr",
+      "arguments": {}
+    },
+    {
+      "name": "E-commerce Product Search",
+      "description": "Example for e-commerce product search with price filtering",
+      "tool": "faceted_search",
+      "arguments": {
+        "query": "laptop computer",
+        "facet_fields": ["brand", "price_range", "rating", "features"],
+        "filters": [
+          "price:[500 TO 2000]",
+          "in_stock:true",
+          "rating:[4.0 TO *]"
+        ],
+        "rows": 20
+      }
+    },
+    {
+      "name": "Academic Paper Search",
+      "description": "Example for searching academic papers",
+      "tool": "search_with_highlighting",
+      "arguments": {
+        "query": "quantum computing applications",
+        "highlight_fields": ["title", "abstract", "keywords"],
+        "filters": [
+          "publication_type:journal",
+          "peer_reviewed:true",
+          "publication_date:[2020-01-01T00:00:00Z TO *]"
+        ],
+        "sort": "citation_count desc",
+        "rows": 15
+      }
+    },
+    {
+      "name": "Geographic Search",
+      "description": "Example for location-based search",
+      "tool": "advanced_search",
+      "arguments": {
+        "query": "restaurants",
+        "filters": [
+          "{!geofilt pt=37.7749,-122.4194 skey=location d=10}",
+          "rating:[4 TO *]",
+          "open_now:true"
+        ],
+        "sort": "geodist() asc",
+        "fields": ["name", "address", "rating", "cuisine_type", "distance:geodist()"],
+        "rows": 25
+      }
+    }
+  ],
+  "common_solr_query_patterns": {
+    "basic_text_search": "machine learning",
+    "phrase_search": "\"artificial intelligence\"",
+    "boolean_and": "machine AND learning",
+    "boolean_or": "python OR java",
+    "boolean_not": "programming NOT tutorial",
+    "wildcard": "comput*",
+    "fuzzy_search": "algorithm~",
+    "proximity_search": "\"machine learning\"~10",
+    "field_specific": "title:\"data science\"",
+    "range_query": "price:[100 TO 500]",
+    "date_range": "date:[2023-01-01T00:00:00Z TO 2023-12-31T23:59:59Z]",
+    "boost_query": "title:\"AI\"^2 content:\"artificial intelligence\"",
+    "grouped_query": "(python OR java) AND (tutorial OR guide)"
+  },
+  "common_filters": [
+    "status:published",
+    "category:technology",
+    "rating:[4 TO *]",
+    "price:[0 TO 1000]",
+    "date:[NOW-1YEAR TO NOW]",
+    "in_stock:true",
+    "language:en",
+    "content_type:(article OR blog)"
+  ],
+  "useful_sort_options": [
+    "score desc",
+    "date desc",
+    "price asc",
+    "rating desc",
+    "popularity desc",
+    "title asc",
+    "random_12345 desc"
+  ]
+}

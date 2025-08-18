@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  solr-mcp-server:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SOLR_BASE_URL=http://solr:8983/solr
+      - SOLR_COLLECTION=example_collection
+      - SOLR_VERIFY_SSL=false
+      - LOG_LEVEL=INFO
+      - MCP_SERVER_HOST=0.0.0.0
+      - MCP_SERVER_PORT=8080
+    depends_on:
+      solr:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - solr-network
+
+  solr:
+    image: solr:9-slim
+    ports:
+      - "8983:8983"
+    volumes:
+      - solr_data:/var/solr
+      - ./solr-config:/opt/solr-config:ro
+    environment:
+      - SOLR_HEAP=1g
+    command:
+      - bash
+      - -c
+      - |
+        solr start -f &
+        sleep 10
+        solr create_collection -c example_collection -n _default
+        wait
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8983/solr/admin/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - solr-network
+
+  # Optional: Add sample data loader
+  data-loader:
+    image: curlimages/curl:latest
+    depends_on:
+      solr:
+        condition: service_healthy
+    volumes:
+      - ./sample-data:/data:ro
+    command:
+      - sh
+      - -c
+      - |
+        echo "Loading sample data..."
+        for file in /data/*.json; do
+          if [ -f "$$file" ]; then
+            echo "Loading $$file"
+            curl -X POST -H "Content-Type: application/json" \
+              http://solr:8983/solr/example_collection/update \
+              --data-binary @$$file
+          fi
+        done
+        echo "Committing data..."
+        curl -X POST -H "Content-Type: application/xml" \
+          http://solr:8983/solr/example_collection/update \
+          --data-binary '<commit/>'
+        echo "Data loading complete"
+    networks:
+      - solr-network
+
+volumes:
+  solr_data:
+    driver: local
+
+networks:
+  solr-network:
+    driver: bridge
