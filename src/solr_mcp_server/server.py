@@ -11,11 +11,11 @@ from typing import Any, Dict, List, Optional
 
 from mcp import McpError, Tool
 from mcp.server import Server
-from mcp.server.models import InitializeResult
 from mcp.server.stdio import stdio_server
 from mcp.types import (
     INVALID_PARAMS,
     INTERNAL_ERROR,
+    InitializeResult,
     TextContent,
     EmbeddedResource,
     Tool as ToolDefinition,

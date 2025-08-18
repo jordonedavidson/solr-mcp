@@ -1,0 +1,625 @@
+Metadata-Version: 2.4
+Name: solr-mcp-server
+Version: 1.0.0
+Summary: MCP Server for Apache SOLR search functionality
+Author-email: Your Name <your.email@example.com>
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: mcp>=1.0.0
+Requires-Dist: pysolr>=3.9.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: httpx>=0.24.0
+Requires-Dist: typing-extensions>=4.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.10.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: pre-commit>=3.0.0; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest>=7.0.0; extra == "test"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "test"
+Requires-Dist: pytest-cov>=4.0.0; extra == "test"
+Requires-Dist: pytest-mock>=3.10.0; extra == "test"
+Requires-Dist: responses>=0.23.0; extra == "test"
+Provides-Extra: ollama
+Requires-Dist: ollama>=0.1.0; extra == "ollama"
+
+# SOLR MCP Server
+
+A Model Context Protocol (MCP) server that provides comprehensive Apache SOLR search functionality to MCP clients, enabling AI assistants and other applications to perform sophisticated search operations on SOLR collections.
+
+## Features
+
+- 🔍 **Comprehensive Search**: Basic search, advanced filtering, faceted search, and highlighting
+- 🚀 **High Performance**: Optimized queries with configurable limits and efficient result processing
+- 🔧 **Easy Configuration**: Environment-based configuration with validation
+- 🛡️ **Secure**: Support for authentication, SSL/TLS, and input validation
+- 📊 **Rich Results**: Detailed search results with scores, facets, and highlighting
+- 🔍 **Query Enhancement**: Spelling suggestions and schema introspection
+- 📝 **Well-Tested**: Comprehensive unit and functional tests
+- 📚 **Well-Documented**: Complete API documentation and examples
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.8 or higher
+- Apache SOLR 6.0 or higher
+- A SOLR collection with indexed data
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-repo/solr-mcp-server.git
+   cd solr-mcp-server
+   ```
+
+2. **Install the package:**
+   ```bash
+   pip install -e .
+   ```
+
+   Or for development:
+   ```bash
+   pip install -e ".[dev]"
+   ```
+
+### Basic Setup
+
+1. **Create a `.env` file:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configure your SOLR connection:**
+   ```bash
+   # Edit .env file
+   SOLR_BASE_URL=http://localhost:8983/solr
+   SOLR_COLLECTION=your_collection_name
+   ```
+
+3. **Test your configuration:**
+   ```bash
+   solr-mcp-server --validate-config
+   ```
+
+4. **Start the server:**
+   ```bash
+   solr-mcp-server
+   ```
+
+## Configuration
+
+### Environment Variables
+
+The server is configured through environment variables or a `.env` file:
+
+#### Required Configuration
+```bash
+SOLR_COLLECTION=your_collection_name
+```
+
+#### SOLR Configuration
+```bash
+SOLR_BASE_URL=http://localhost:8983/solr  # SOLR base URL
+SOLR_USERNAME=                            # Optional: SOLR username
+SOLR_PASSWORD=                            # Optional: SOLR password
+SOLR_TIMEOUT=30                           # Request timeout in seconds
+SOLR_VERIFY_SSL=true                      # Verify SSL certificates
+SOLR_MAX_ROWS=1000                        # Maximum rows per query
+SOLR_DEFAULT_SEARCH_FIELD=text            # Default search field
+SOLR_FACET_LIMIT=100                      # Maximum facet values
+SOLR_HIGHLIGHT_ENABLED=true               # Enable highlighting
+```
+
+#### MCP Server Configuration
+```bash
+MCP_SERVER_HOST=localhost                 # Server host
+MCP_SERVER_PORT=8080                      # Server port
+LOG_LEVEL=INFO                            # Logging level
+```
+
+#### Optional Ollama Integration
+```bash
+OLLAMA_BASE_URL=http://localhost:11434    # Ollama API URL
+OLLAMA_MODEL=llama2                       # Default Ollama model
+```
+
+### Configuration Examples
+
+#### Development Setup
+```bash
+# .env
+SOLR_BASE_URL=http://localhost:8983/solr
+SOLR_COLLECTION=dev_collection
+SOLR_VERIFY_SSL=false
+LOG_LEVEL=DEBUG
+```
+
+#### Production Setup
+```bash
+# .env
+SOLR_BASE_URL=https://solr.example.com:8443/solr
+SOLR_COLLECTION=prod_collection
+SOLR_USERNAME=solr_user
+SOLR_PASSWORD=secure_password
+SOLR_VERIFY_SSL=true
+SOLR_TIMEOUT=60
+LOG_LEVEL=INFO
+```
+
+## Usage
+
+### Command Line Interface
+
+```bash
+# Start server with default configuration
+solr-mcp-server
+
+# Use specific configuration file
+solr-mcp-server --env-file /path/to/config.env
+
+# Enable debug logging
+solr-mcp-server --log-level DEBUG
+
+# Validate configuration only
+solr-mcp-server --validate-config
+
+# Show help
+solr-mcp-server --help
+```
+
+### Available MCP Tools
+
+The server exposes the following tools through the MCP protocol:
+
+#### 1. Basic Search
+Perform simple text search against your SOLR collection.
+
+**Parameters:**
+- `query` (required): Search query string
+- `rows` (optional): Number of results (1-1000, default: 10)
+- `start` (optional): Starting offset (default: 0)
+
+**Example:**
+```json
+{
+  "tool": "search",
+  "arguments": {
+    "query": "artificial intelligence",
+    "rows": 20,
+    "start": 0
+  }
+}
+```
+
+#### 2. Advanced Search
+Perform advanced search with field selection, filtering, and sorting.
+
+**Parameters:**
+- `query` (required): Search query string
+- `fields` (optional): List of fields to return
+- `filters` (optional): List of filter queries
+- `sort` (optional): Sort specification
+- `rows` (optional): Number of results (default: 10)
+- `start` (optional): Starting offset (default: 0)
+
+**Example:**
+```json
+{
+  "tool": "advanced_search",
+  "arguments": {
+    "query": "machine learning",
+    "fields": ["title", "content", "author", "date"],
+    "filters": ["category:technology", "published:true"],
+    "sort": "date desc",
+    "rows": 15
+  }
+}
+```
+
+#### 3. Faceted Search
+Perform search with facet aggregation for filtering and navigation.
+
+**Parameters:**
+- `query` (required): Search query string
+- `facet_fields` (required): List of fields to facet on
+- `filters` (optional): List of filter queries
+- `rows` (optional): Number of results (default: 10)
+
+**Example:**
+```json
+{
+  "tool": "faceted_search",
+  "arguments": {
+    "query": "*:*",
+    "facet_fields": ["category", "author", "year"],
+    "filters": ["status:published"],
+    "rows": 5
+  }
+}
+```
+
+#### 4. Search with Highlighting
+Perform search with result highlighting to show matched terms.
+
+**Parameters:**
+- `query` (required): Search query string
+- `highlight_fields` (optional): Fields to highlight (empty for all fields)
+- `rows` (optional): Number of results (default: 10)
+- `start` (optional): Starting offset (default: 0)
+
+**Example:**
+```json
+{
+  "tool": "search_with_highlighting",
+  "arguments": {
+    "query": "neural networks",
+    "highlight_fields": ["title", "content"],
+    "rows": 10
+  }
+}
+```
+
+#### 5. Get Spelling Suggestions
+Get spelling suggestions for query terms.
+
+**Parameters:**
+- `query` (required): Query to get suggestions for
+- `count` (optional): Maximum suggestions (1-20, default: 5)
+
+**Example:**
+```json
+{
+  "tool": "get_suggestions",
+  "arguments": {
+    "query": "machne lerning",
+    "count": 3
+  }
+}
+```
+
+#### 6. Get Schema Fields
+Retrieve available fields in the SOLR schema.
+
+**Parameters:** None
+
+**Example:**
+```json
+{
+  "tool": "get_schema_fields",
+  "arguments": {}
+}
+```
+
+#### 7. Get Collection Statistics
+Get basic statistics about the SOLR collection.
+
+**Parameters:** None
+
+**Example:**
+```json
+{
+  "tool": "get_collection_stats",
+  "arguments": {}
+}
+```
+
+#### 8. Ping SOLR
+Test SOLR connection health.
+
+**Parameters:** None
+
+**Example:**
+```json
+{
+  "tool": "ping_solr",
+  "arguments": {}
+}
+```
+
+## Development
+
+### Development Setup
+
+1. **Install development dependencies:**
+   ```bash
+   pip install -e ".[dev]"
+   ```
+
+2. **Install pre-commit hooks:**
+   ```bash
+   pre-commit install
+   ```
+
+3. **Run tests:**
+   ```bash
+   # Unit tests only
+   pytest tests/unit/
+
+   # All tests (requires SOLR instance)
+   SOLR_TEST_URL=http://localhost:8983/solr SOLR_TEST_COLLECTION=test pytest
+
+   # With coverage
+   pytest --cov=solr_mcp_server tests/
+   ```
+
+4. **Code formatting:**
+   ```bash
+   # Format code
+   black src/ tests/
+
+   # Sort imports
+   isort src/ tests/
+
+   # Type checking
+   mypy src/
+   ```
+
+### Project Structure
+
+```
+solr-mcp-server/
+├── src/
+│   └── solr_mcp_server/
+│       ├── __init__.py         # Package initialization
+│       ├── main.py             # CLI entry point
+│       ├── config.py           # Configuration management
+│       ├── solr_client.py      # SOLR client wrapper
+│       └── server.py           # MCP server implementation
+├── tests/
+│   ├── unit/                   # Unit tests
+│   ├── functional/             # Integration tests
+│   └── conftest.py            # Test configuration
+├── docs/                       # Documentation
+├── examples/                   # Example configurations
+├── pyproject.toml             # Project configuration
+├── README.md                  # This file
+├── SYSTEM_DETAILS.md          # Architecture documentation
+└── .env.example               # Example environment file
+```
+
+### Running Tests
+
+#### Unit Tests
+```bash
+# Run all unit tests
+pytest tests/unit/
+
+# Run specific test file
+pytest tests/unit/test_config.py
+
+# Run with verbose output
+pytest -v tests/unit/
+```
+
+#### Functional Tests
+Functional tests require a running SOLR instance:
+
+```bash
+# Set environment variables
+export SOLR_TEST_URL=http://localhost:8983/solr
+export SOLR_TEST_COLLECTION=test_collection
+
+# Run functional tests
+pytest tests/functional/ -m functional
+
+# Skip functional tests
+pytest -m "not functional"
+```
+
+#### Test Coverage
+```bash
+# Generate coverage report
+pytest --cov=solr_mcp_server --cov-report=html tests/
+
+# View coverage report
+open htmlcov/index.html
+```
+
+## Deployment
+
+### Docker Deployment
+
+1. **Create a Dockerfile:**
+   ```dockerfile
+   FROM python:3.11-slim
+
+   WORKDIR /app
+   COPY . /app
+
+   RUN pip install -e .
+
+   CMD ["solr-mcp-server"]
+   ```
+
+2. **Build and run:**
+   ```bash
+   docker build -t solr-mcp-server .
+   docker run --env-file .env -p 8080:8080 solr-mcp-server
+   ```
+
+### Production Deployment
+
+#### Using systemd
+
+1. **Create service file `/etc/systemd/system/solr-mcp-server.service`:**
+   ```ini
+   [Unit]
+   Description=SOLR MCP Server
+   After=network.target
+
+   [Service]
+   Type=simple
+   User=solr-mcp
+   WorkingDirectory=/opt/solr-mcp-server
+   Environment=PATH=/opt/solr-mcp-server/venv/bin
+   EnvironmentFile=/opt/solr-mcp-server/.env
+   ExecStart=/opt/solr-mcp-server/venv/bin/solr-mcp-server
+   Restart=always
+   RestartSec=10
+
+   [Install]
+   WantedBy=multi-user.target
+   ```
+
+2. **Enable and start service:**
+   ```bash
+   sudo systemctl enable solr-mcp-server
+   sudo systemctl start solr-mcp-server
+   ```
+
+#### Using Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  solr-mcp-server:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - SOLR_BASE_URL=http://solr:8983/solr
+      - SOLR_COLLECTION=my_collection
+    depends_on:
+      - solr
+    restart: always
+
+  solr:
+    image: solr:9
+    ports:
+      - "8983:8983"
+    volumes:
+      - solr_data:/var/solr
+    command:
+      - solr-precreate
+      - my_collection
+
+volumes:
+  solr_data:
+```
+
+### Monitoring
+
+#### Health Check Endpoint
+The server provides health checking through the `ping_solr` tool:
+
+```bash
+# Using MCP client to check health
+echo '{"tool": "ping_solr", "arguments": {}}' | mcp-client
+```
+
+#### Logging
+Configure logging levels and output:
+
+```bash
+# Debug logging
+LOG_LEVEL=DEBUG solr-mcp-server
+
+# JSON logging for structured logs
+LOG_FORMAT=json solr-mcp-server
+```
+
+#### Metrics
+Monitor key metrics:
+- Query response times
+- Error rates
+- SOLR connection health
+- Request volume
+
+## Troubleshooting
+
+### Common Issues
+
+#### Connection Errors
+```bash
+# Test SOLR connection
+curl "http://localhost:8983/solr/admin/ping"
+
+# Validate configuration
+solr-mcp-server --validate-config
+
+# Check logs
+solr-mcp-server --log-level DEBUG
+```
+
+#### Permission Errors
+```bash
+# Check SOLR authentication
+curl -u username:password "http://localhost:8983/solr/collection/admin/ping"
+```
+
+#### Performance Issues
+```bash
+# Reduce result size
+SOLR_MAX_ROWS=100 solr-mcp-server
+
+# Increase timeout
+SOLR_TIMEOUT=60 solr-mcp-server
+```
+
+### Debug Mode
+Enable debug logging for troubleshooting:
+
+```bash
+solr-mcp-server --log-level DEBUG
+```
+
+### Configuration Validation
+Validate your configuration before running:
+
+```bash
+solr-mcp-server --validate-config
+```
+
+## Contributing
+
+We welcome contributions! Please see our contributing guidelines:
+
+1. **Fork the repository**
+2. **Create a feature branch**
+3. **Make your changes**
+4. **Add tests for new functionality**
+5. **Ensure all tests pass**
+6. **Submit a pull request**
+
+### Code Style
+- Follow PEP 8
+- Use type hints
+- Write comprehensive docstrings
+- Add unit tests for new features
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+- **Documentation**: [SYSTEM_DETAILS.md](SYSTEM_DETAILS.md)
+- **Issues**: [GitHub Issues](https://github.com/your-repo/solr-mcp-server/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-repo/solr-mcp-server/discussions)
+
+## Changelog
+
+### Version 1.0.0
+- Initial release
+- Full MCP protocol support
+- Comprehensive SOLR search functionality
+- Complete test coverage
+- Production-ready deployment options

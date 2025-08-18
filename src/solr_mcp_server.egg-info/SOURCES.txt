@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+src/solr_mcp_server/__init__.py
+src/solr_mcp_server/config.py
+src/solr_mcp_server/main.py
+src/solr_mcp_server/server.py
+src/solr_mcp_server/solr_client.py
+src/solr_mcp_server.egg-info/PKG-INFO
+src/solr_mcp_server.egg-info/SOURCES.txt
+src/solr_mcp_server.egg-info/dependency_links.txt
+src/solr_mcp_server.egg-info/entry_points.txt
+src/solr_mcp_server.egg-info/requires.txt
+src/solr_mcp_server.egg-info/top_level.txt
