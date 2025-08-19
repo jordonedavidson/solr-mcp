@@ -141,31 +141,65 @@ async def main_async(
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         
-        # Run the server
-        server_task = asyncio.create_task(run_server(config))
-        shutdown_task = asyncio.create_task(shutdown_event.wait())
+        # Run the server with proper error handling and recovery
+        max_retries = 3
+        retry_delay = 5.0
         
-        # Wait for either the server to complete or shutdown signal
-        done, pending = await asyncio.wait(
-            [server_task, shutdown_task],
-            return_when=asyncio.FIRST_COMPLETED
-        )
-        
-        # Cancel pending tasks
-        for task in pending:
-            task.cancel()
+        for attempt in range(max_retries):
             try:
-                await task
-            except asyncio.CancelledError:
-                pass
-        
-        # Check if server completed with an error
-        if server_task in done:
-            try:
-                await server_task
+                server_task = asyncio.create_task(run_server(config))
+                shutdown_task = asyncio.create_task(shutdown_event.wait())
+                
+                logger.info(f"Starting server (attempt {attempt + 1}/{max_retries})...")
+                
+                # Wait for either the server to complete or shutdown signal
+                done, pending = await asyncio.wait(
+                    [server_task, shutdown_task],
+                    return_when=asyncio.FIRST_COMPLETED
+                )
+                
+                # If shutdown was requested, cancel server and exit cleanly
+                if shutdown_task in done:
+                    logger.info("Shutdown requested, stopping server...")
+                    server_task.cancel()
+                    try:
+                        await asyncio.wait_for(server_task, timeout=10.0)
+                    except (asyncio.CancelledError, asyncio.TimeoutError):
+                        pass
+                    break
+                
+                # If server completed, check for errors
+                if server_task in done:
+                    try:
+                        await server_task
+                        # If we get here, server completed successfully
+                        logger.info("Server completed successfully")
+                        break
+                    except Exception as e:
+                        logger.error(f"Server error on attempt {attempt + 1}: {e}")
+                        
+                        # Cancel shutdown task
+                        shutdown_task.cancel()
+                        try:
+                            await shutdown_task
+                        except asyncio.CancelledError:
+                            pass
+                        
+                        # If this was the last attempt, give up
+                        if attempt == max_retries - 1:
+                            logger.error("Maximum retry attempts exceeded")
+                            return 1
+                        
+                        # Wait before retry
+                        logger.info(f"Retrying in {retry_delay} seconds...")
+                        await asyncio.sleep(retry_delay)
+                        retry_delay *= 1.5  # Exponential backoff
+                        
             except Exception as e:
-                logger.error(f"Server error: {e}")
-                return 1
+                logger.error(f"Unexpected error on attempt {attempt + 1}: {e}")
+                if attempt == max_retries - 1:
+                    return 1
+                await asyncio.sleep(retry_delay)
         
         logger.info("SOLR MCP Server shutdown completed")
         return 0

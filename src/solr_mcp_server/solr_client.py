@@ -102,16 +102,62 @@ class SOLRClient:
                 collection_url,
                 auth=auth,
                 timeout=self.config.timeout,
-                verify=self.config.verify_ssl
+                verify=self.config.verify_ssl,
+                # Add connection pooling and keep-alive
+                session=self._create_session()
             )
             
-            # Test the connection
-            self._solr.ping()
+            # Test the connection with retry
+            self._ping_with_retry()
             logger.info(f"Successfully connected to SOLR at {collection_url}")
             
         except Exception as e:
             logger.error(f"Failed to connect to SOLR: {e}")
             raise SOLRConnectionError(f"Failed to connect to SOLR: {e}")
+    
+    def _create_session(self):
+        """Create a requests session with connection pooling."""
+        import requests
+        from requests.adapters import HTTPAdapter
+        from urllib3.util.retry import Retry
+        
+        session = requests.Session()
+        
+        # Configure retry strategy
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+        )
+        
+        # Configure connection adapter with pooling
+        adapter = HTTPAdapter(
+            max_retries=retry_strategy,
+            pool_connections=10,
+            pool_maxsize=20
+        )
+        
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        
+        # Set keep-alive
+        session.headers.update({'Connection': 'keep-alive'})
+        
+        return session
+    
+    def _ping_with_retry(self, max_retries: int = 3) -> None:
+        """Ping SOLR with retry logic."""
+        import time
+        
+        for attempt in range(max_retries):
+            try:
+                self._solr.ping()
+                return
+            except Exception as e:
+                if attempt == max_retries - 1:
+                    raise
+                logger.warning(f"SOLR ping attempt {attempt + 1} failed: {e}. Retrying...")
+                time.sleep(0.5 * (attempt + 1))  # Progressive backoff
 
     def ping(self) -> bool:
         """
