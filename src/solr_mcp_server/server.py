@@ -468,6 +468,19 @@ class SOLRMCPServer:
         if not self.solr_client.ping():
             raise RuntimeError("Failed to connect to SOLR. Please check your configuration.")
         
+        # Check if STDIN is available for MCP communication
+        import sys
+        if sys.stdin.isatty():
+            raise RuntimeError(
+                "This MCP server requires STDIN for communication.\n"
+                "It should be started by an MCP client (like Claude Desktop), not run directly.\n"
+                "\n"
+                "For testing purposes, you can pipe input:\n"
+                "  echo '{}' | solr-mcp-server\n"
+                "\n"
+                "Or use it with an MCP client configuration."
+            )
+        
         async with stdio_server() as (read_stream, write_stream):
             logger.info("SOLR MCP Server is running...")
             await self.server.run(
