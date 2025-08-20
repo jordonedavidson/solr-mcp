@@ -10,12 +10,11 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from mcp import McpError, Tool
-from mcp.server import Server
+from mcp.server import Server, InitializationOptions
 from mcp.server.stdio import stdio_server
 from mcp.types import (
     INVALID_PARAMS,
     INTERNAL_ERROR,
-    InitializeResult,
     TextContent,
     EmbeddedResource,
     Tool as ToolDefinition,
@@ -30,7 +29,7 @@ logger = logging.getLogger(__name__)
 class SOLRMCPServer:
     """
     MCP Server that provides SOLR search functionality.
-    
+
     This server exposes various tools for searching SOLR collections,
     including basic search, advanced search with filters, faceted search,
     and schema introspection.
@@ -39,7 +38,7 @@ class SOLRMCPServer:
     def __init__(self, config: Config):
         """
         Initialize the SOLR MCP Server.
-        
+
         Args:
             config: Configuration object containing SOLR and MCP settings.
         """
@@ -50,7 +49,7 @@ class SOLRMCPServer:
 
     def _setup_tools(self) -> None:
         """Set up all available tools for the MCP server."""
-        
+
         @self.server.list_tools()
         async def handle_list_tools() -> List[ToolDefinition]:
             """List all available tools."""
@@ -262,12 +261,12 @@ class SOLRMCPServer:
         query = arguments.get("query")
         rows = arguments.get("rows", 10)
         start = arguments.get("start", 0)
-        
+
         if not query:
             raise McpError(INVALID_PARAMS, "Query parameter is required")
-        
+
         response = self.solr_client.search(query=query, rows=rows, start=start)
-        
+
         result = {
             "total_found": response.total_found,
             "start": response.start,
@@ -282,7 +281,7 @@ class SOLRMCPServer:
                 for result in response.results
             ]
         }
-        
+
         return [TextContent(
             type="text",
             text=json.dumps(result, indent=2, default=str)
@@ -296,10 +295,10 @@ class SOLRMCPServer:
         sort = arguments.get("sort")
         rows = arguments.get("rows", 10)
         start = arguments.get("start", 0)
-        
+
         if not query:
             raise McpError(INVALID_PARAMS, "Query parameter is required")
-        
+
         response = self.solr_client.search(
             query=query,
             fields=fields,
@@ -308,7 +307,7 @@ class SOLRMCPServer:
             rows=rows,
             start=start
         )
-        
+
         result = {
             "total_found": response.total_found,
             "start": response.start,
@@ -323,7 +322,7 @@ class SOLRMCPServer:
                 for result in response.results
             ]
         }
-        
+
         return [TextContent(
             type="text",
             text=json.dumps(result, indent=2, default=str)
@@ -335,17 +334,18 @@ class SOLRMCPServer:
         facet_fields = arguments.get("facet_fields")
         filters = arguments.get("filters")
         rows = arguments.get("rows", 10)
-        
+
         if not query or not facet_fields:
-            raise McpError(INVALID_PARAMS, "Query and facet_fields parameters are required")
-        
+            raise McpError(
+                INVALID_PARAMS, "Query and facet_fields parameters are required")
+
         response = self.solr_client.search(
             query=query,
             filters=filters,
             facet_fields=facet_fields,
             rows=rows
         )
-        
+
         result = {
             "total_found": response.total_found,
             "query_time": response.query_time,
@@ -368,7 +368,7 @@ class SOLRMCPServer:
                 for result in response.results
             ]
         }
-        
+
         return [TextContent(
             type="text",
             text=json.dumps(result, indent=2, default=str)
@@ -380,17 +380,17 @@ class SOLRMCPServer:
         highlight_fields = arguments.get("highlight_fields")
         rows = arguments.get("rows", 10)
         start = arguments.get("start", 0)
-        
+
         if not query:
             raise McpError(INVALID_PARAMS, "Query parameter is required")
-        
+
         response = self.solr_client.search(
             query=query,
             highlight_fields=highlight_fields,
             rows=rows,
             start=start
         )
-        
+
         result = {
             "total_found": response.total_found,
             "start": response.start,
@@ -406,7 +406,7 @@ class SOLRMCPServer:
                 for result in response.results
             ]
         }
-        
+
         return [TextContent(
             type="text",
             text=json.dumps(result, indent=2, default=str)
@@ -416,12 +416,12 @@ class SOLRMCPServer:
         """Handle suggestion requests."""
         query = arguments.get("query")
         count = arguments.get("count", 5)
-        
+
         if not query:
             raise McpError(INVALID_PARAMS, "Query parameter is required")
-        
+
         suggestions = self.solr_client.suggest_query(query, count)
-        
+
         return [TextContent(
             type="text",
             text=json.dumps({"suggestions": suggestions}, indent=2)
@@ -430,7 +430,7 @@ class SOLRMCPServer:
     async def _handle_get_schema_fields(self, arguments: Dict[str, Any]) -> List[TextContent]:
         """Handle schema fields requests."""
         fields = self.solr_client.get_schema_fields()
-        
+
         return [TextContent(
             type="text",
             text=json.dumps({"fields": fields}, indent=2)
@@ -439,7 +439,7 @@ class SOLRMCPServer:
     async def _handle_get_collection_stats(self, arguments: Dict[str, Any]) -> List[TextContent]:
         """Handle collection statistics requests."""
         stats = self.solr_client.get_collection_stats()
-        
+
         return [TextContent(
             type="text",
             text=json.dumps(stats, indent=2)
@@ -448,13 +448,13 @@ class SOLRMCPServer:
     async def _handle_ping_solr(self, arguments: Dict[str, Any]) -> List[TextContent]:
         """Handle SOLR ping requests."""
         is_healthy = self.solr_client.ping()
-        
+
         result = {
             "status": "healthy" if is_healthy else "unhealthy",
             "collection": self.config.solr.collection,
             "solr_url": self.config.solr.base_url
         }
-        
+
         return [TextContent(
             type="text",
             text=json.dumps(result, indent=2)
@@ -462,12 +462,14 @@ class SOLRMCPServer:
 
     async def run(self) -> None:
         """Run the MCP server."""
-        logger.info(f"Starting SOLR MCP Server for collection: {self.config.solr.collection}")
-        
+        logger.info(
+            f"Starting SOLR MCP Server for collection: {self.config.solr.collection}")
+
         # Test SOLR connection before starting
         if not self.solr_client.ping():
-            raise RuntimeError("Failed to connect to SOLR. Please check your configuration.")
-        
+            raise RuntimeError(
+                "Failed to connect to SOLR. Please check your configuration.")
+
         # Check if STDIN is available for MCP communication
         import sys
         if sys.stdin.isatty():
@@ -480,23 +482,22 @@ class SOLRMCPServer:
                 "\n"
                 "Or use it with an MCP client configuration."
             )
-        
+
         async with stdio_server() as (read_stream, write_stream):
             logger.info("SOLR MCP Server is running...")
+
+            # Create initialization options using the server's helper method
+            initialization_options = self.server.create_initialization_options(
+                notification_options=None,
+                experimental_capabilities=None,
+            )
+
             await self.server.run(
                 read_stream,
                 write_stream,
-                InitializeResult(
-                    protocolVersion="2024-11-05",
-                    capabilities=self.server.get_capabilities(
-                        notification_options=None,
-                        experimental_capabilities=None,
-                    ),
-                    serverInfo={
-                        "name": "solr-mcp-server",
-                        "version": "1.0.0",
-                    },
-                ),
+                initialization_options,
+                False,
+                True
             )
 
     def cleanup(self) -> None:
@@ -509,7 +510,7 @@ class SOLRMCPServer:
 async def run_server(config: Config) -> None:
     """
     Run the SOLR MCP Server.
-    
+
     Args:
         config: Configuration object.
     """
