@@ -15,6 +15,7 @@ from mcp.server.stdio import stdio_server
 from mcp.types import (
     INVALID_PARAMS,
     INTERNAL_ERROR,
+    ErrorData,
     TextContent,
     EmbeddedResource,
     Tool as ToolDefinition,
@@ -248,13 +249,16 @@ class SOLRMCPServer:
                 elif name == "ping_solr":
                     return await self._handle_ping_solr(arguments)
                 else:
-                    raise McpError(INVALID_PARAMS, f"Unknown tool: {name}")
+                    raise McpError(ErrorData(code=INVALID_PARAMS,
+                                   message=f"Unknown tool: {name}"))
             except SOLRClientError as e:
                 logger.error(f"SOLR error in tool {name}: {e}")
-                raise McpError(INTERNAL_ERROR, f"SOLR error: {str(e)}")
+                raise McpError(ErrorData(code=INTERNAL_ERROR,
+                               message=f"SOLR error: {str(e)}"))
             except Exception as e:
                 logger.error(f"Unexpected error in tool {name}: {e}")
-                raise McpError(INTERNAL_ERROR, f"Internal error: {str(e)}")
+                raise McpError(ErrorData(code=INTERNAL_ERROR,
+                               message=f"Internal error: {str(e)}"))
 
     async def _handle_search(self, arguments: Dict[str, Any]) -> List[TextContent]:
         """Handle basic search requests."""
@@ -263,7 +267,8 @@ class SOLRMCPServer:
         start = arguments.get("start", 0)
 
         if not query:
-            raise McpError(INVALID_PARAMS, "Query parameter is required")
+            raise McpError(ErrorData(code=INVALID_PARAMS,
+                           message="Query parameter is required"))
 
         response = self.solr_client.search(query=query, rows=rows, start=start)
 
@@ -297,7 +302,8 @@ class SOLRMCPServer:
         start = arguments.get("start", 0)
 
         if not query:
-            raise McpError(INVALID_PARAMS, "Query parameter is required")
+            raise McpError(ErrorData(code=INVALID_PARAMS,
+                           message="Query parameter is required"))
 
         response = self.solr_client.search(
             query=query,
@@ -337,7 +343,7 @@ class SOLRMCPServer:
 
         if not query or not facet_fields:
             raise McpError(
-                INVALID_PARAMS, "Query and facet_fields parameters are required")
+                ErrorData(code=INVALID_PARAMS, message="Query and facet_fields parameters are required"))
 
         response = self.solr_client.search(
             query=query,
@@ -382,7 +388,8 @@ class SOLRMCPServer:
         start = arguments.get("start", 0)
 
         if not query:
-            raise McpError(INVALID_PARAMS, "Query parameter is required")
+            raise McpError(ErrorData(code=INVALID_PARAMS,
+                           message="Query parameter is required"))
 
         response = self.solr_client.search(
             query=query,
@@ -418,7 +425,8 @@ class SOLRMCPServer:
         count = arguments.get("count", 5)
 
         if not query:
-            raise McpError(INVALID_PARAMS, "Query parameter is required")
+            raise McpError(ErrorData(code=INVALID_PARAMS,
+                           message="Query parameter is required"))
 
         suggestions = self.solr_client.suggest_query(query, count)
 
