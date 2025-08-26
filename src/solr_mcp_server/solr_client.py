@@ -55,16 +55,19 @@ class SearchResponse(BaseModel):
 
 class SOLRClientError(Exception):
     """Base exception for SOLR client errors."""
+
     pass
 
 
 class SOLRConnectionError(SOLRClientError):
     """Raised when connection to SOLR fails."""
+
     pass
 
 
 class SOLRQueryError(SOLRClientError):
     """Raised when a SOLR query fails."""
+
     pass
 
 
@@ -92,7 +95,8 @@ class SOLRClient:
         try:
             # Build the full URL to the collection
             collection_url = urljoin(
-                f"{self.config.base_url}/", f"{self.config.collection}/")
+                f"{self.config.base_url}/", f"{self.config.collection}/"
+            )
 
             # Set up authentication if provided
             auth = None
@@ -105,7 +109,7 @@ class SOLRClient:
                 timeout=self.config.timeout,
                 verify=self.config.verify_ssl,
                 # Add connection pooling and keep-alive
-                session=self._create_session()
+                session=self._create_session(),
             )
 
             # Test the connection with retry
@@ -133,16 +137,14 @@ class SOLRClient:
 
         # Configure connection adapter with pooling
         adapter = HTTPAdapter(
-            max_retries=retry_strategy,
-            pool_connections=10,
-            pool_maxsize=20
+            max_retries=retry_strategy, pool_connections=10, pool_maxsize=20
         )
 
         session.mount("http://", adapter)
         session.mount("https://", adapter)
 
         # Set keep-alive
-        session.headers.update({'Connection': 'keep-alive'})
+        session.headers.update({"Connection": "keep-alive"})
 
         return session
 
@@ -158,7 +160,8 @@ class SOLRClient:
                 if attempt == max_retries - 1:
                     raise
                 logger.warning(
-                    f"SOLR ping attempt {attempt + 1} failed: {e}. Retrying...")
+                    f"SOLR ping attempt {attempt + 1} failed: {e}. Retrying..."
+                )
                 time.sleep(0.5 * (attempt + 1))  # Progressive backoff
 
     def ping(self) -> bool:
@@ -188,7 +191,7 @@ class SOLRClient:
         facet_fields: Optional[List[str]] = None,
         highlight_fields: Optional[List[str]] = None,
         suggest: bool = False,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> SearchResponse:
         """
         Perform a search query against SOLR.
@@ -218,54 +221,49 @@ class SOLRClient:
                 rows = min(self.config.max_rows, 100)
 
             # Build search parameters
-            search_params = {
-                'q': query,
-                'start': start,
-                'rows': rows,
-                **kwargs
-            }
+            search_params = {"q": query, "start": start, "rows": rows, **kwargs}
 
             # hangke search fields (qf)
             if default_field:
-                search_params['df'] = default_field
+                search_params["df"] = default_field
 
             # Add field list if specified
             if fields:
-                search_params['fl'] = ','.join(fields)
+                search_params["fl"] = ",".join(fields)
 
             # Add sort if specified
             if sort:
-                search_params['sort'] = sort
+                search_params["sort"] = sort
 
             # Add filter queries
             if filters:
-                search_params['fq'] = filters
+                search_params["fq"] = filters
 
             # Add faceting
             if facet_fields:
-                search_params['facet'] = 'true'
-                search_params['facet.field'] = facet_fields
-                search_params['facet.limit'] = self.config.facet_limit
-                search_params['facet.mincount'] = 1
+                search_params["facet"] = "true"
+                search_params["facet.field"] = facet_fields
+                search_params["facet.limit"] = self.config.facet_limit
+                search_params["facet.mincount"] = 1
 
             # Add highlighting
             if highlight_fields and self.config.highlight_enabled:
-                search_params['hl'] = 'true'
-                search_params['hl.fl'] = ','.join(highlight_fields)
-                search_params['hl.simple.pre'] = '<mark>'
-                search_params['hl.simple.post'] = '</mark>'
+                search_params["hl"] = "true"
+                search_params["hl.fl"] = ",".join(highlight_fields)
+                search_params["hl.simple.pre"] = "<mark>"
+                search_params["hl.simple.post"] = "</mark>"
             elif self.config.highlight_enabled and not highlight_fields:
                 # Enable highlighting on all fields if no specific fields requested
-                search_params['hl'] = 'true'
-                search_params['hl.fl'] = '*'
-                search_params['hl.simple.pre'] = '<mark>'
-                search_params['hl.simple.post'] = '</mark>'
+                search_params["hl"] = "true"
+                search_params["hl.fl"] = "*"
+                search_params["hl.simple.pre"] = "<mark>"
+                search_params["hl.simple.post"] = "</mark>"
 
             # Add suggestions
             if suggest:
-                search_params['spellcheck'] = 'true'
-                search_params['spellcheck.build'] = 'true'
-                search_params['spellcheck.collate'] = 'true'
+                search_params["spellcheck"] = "true"
+                search_params["spellcheck.build"] = "true"
+                search_params["spellcheck.collate"] = "true"
 
             logger.debug(f"Executing SOLR search with params: {search_params}")
 
@@ -296,17 +294,21 @@ class SOLRClient:
             response = self._solr.search(
                 q=query,
                 rows=0,  # We don't need results, just suggestions
-                spellcheck='true',
-                **{'spellcheck.count': count, 'spellcheck.build': 'true'}
+                spellcheck="true",
+                **{"spellcheck.count": count, "spellcheck.build": "true"},
             )
 
             suggestions = {}
             spellcheck = response.spellcheck or {}
 
-            for word, suggestion_data in spellcheck.get('suggestions', {}).items():
-                if isinstance(suggestion_data, dict) and 'suggestion' in suggestion_data:
+            for word, suggestion_data in spellcheck.get("suggestions", {}).items():
+                if (
+                    isinstance(suggestion_data, dict)
+                    and "suggestion" in suggestion_data
+                ):
                     suggestions[word] = [
-                        s for s in suggestion_data['suggestion'][:count]]
+                        s for s in suggestion_data["suggestion"][:count]
+                    ]
 
             return suggestions
 
@@ -324,7 +326,7 @@ class SOLRClient:
         try:
             # This is a simplified approach - in a real implementation,
             # you might want to use the Schema API
-            response = self._solr.search('*:*', rows=1, fl='*')
+            response = self._solr.search("*:*", rows=1, fl="*")
             if response.docs:
                 return list(response.docs[0].keys())
             return []
@@ -340,11 +342,11 @@ class SOLRClient:
             Dictionary with collection statistics.
         """
         try:
-            response = self._solr.search('*:*', rows=0)
+            response = self._solr.search("*:*", rows=0)
             return {
-                'total_documents': response.hits,
-                'collection_name': self.config.collection,
-                'solr_url': self.config.base_url
+                "total_documents": response.hits,
+                "collection_name": self.config.collection,
+                "solr_url": self.config.base_url,
             }
         except Exception as e:
             logger.warning(f"Failed to get collection stats: {e}")
@@ -364,60 +366,62 @@ class SOLRClient:
 
         # Process documents
         for doc in response.docs:
-            doc_id = doc.get('id', str(hash(str(doc))))
-            score = doc.get('score')
+            doc_id = doc.get("id", str(hash(str(doc))))
+            score = doc.get("score")
 
             # Remove special fields from the fields dict
-            fields = {k: v for k, v in doc.items() if k not in ['id', 'score']}
+            fields = {k: v for k, v in doc.items() if k not in ["id", "score"]}
 
             # Get highlighting for this document
             highlighting = None
-            if hasattr(response, 'highlighting') and response.highlighting:
+            if hasattr(response, "highlighting") and response.highlighting:
                 doc_highlighting = response.highlighting.get(doc_id, {})
                 if doc_highlighting:
                     highlighting = doc_highlighting
 
-            results.append(SearchResult(
-                id=doc_id,
-                score=score,
-                fields=fields,
-                highlighting=highlighting
-            ))
+            results.append(
+                SearchResult(
+                    id=doc_id, score=score, fields=fields, highlighting=highlighting
+                )
+            )
 
         # Process facets
         facets = []
-        if hasattr(response, 'facets') and response.facets:
-            facet_fields = response.facets.get('facet_fields', {})
+        if hasattr(response, "facets") and response.facets:
+            facet_fields = response.facets.get("facet_fields", {})
             for field_name, field_values in facet_fields.items():
                 facet_values = []
                 # SOLR returns facet values as [value1, count1, value2, count2, ...]
                 for i in range(0, len(field_values), 2):
                     if i + 1 < len(field_values):
-                        facet_values.append(FacetValue(
-                            value=str(field_values[i]),
-                            count=field_values[i + 1]
-                        ))
+                        facet_values.append(
+                            FacetValue(
+                                value=str(field_values[i]), count=field_values[i + 1]
+                            )
+                        )
 
                 if facet_values:
-                    facets.append(FacetField(
-                        name=field_name, values=facet_values))
+                    facets.append(FacetField(name=field_name, values=facet_values))
 
         # Process spelling suggestions
         suggestions = {}
-        if hasattr(response, 'spellcheck') and response.spellcheck:
-            spellcheck_data = response.spellcheck.get('suggestions', {})
+        if hasattr(response, "spellcheck") and response.spellcheck:
+            spellcheck_data = response.spellcheck.get("suggestions", {})
             for word, suggestion_data in spellcheck_data.items():
-                if isinstance(suggestion_data, dict) and 'suggestion' in suggestion_data:
-                    suggestions[word] = suggestion_data['suggestion']
+                if (
+                    isinstance(suggestion_data, dict)
+                    and "suggestion" in suggestion_data
+                ):
+                    suggestions[word] = suggestion_data["suggestion"]
 
         return SearchResponse(
             results=results,
             total_found=response.hits,
-            start=getattr(response, 'start', 0),
+            start=getattr(response, "start", 0),
             rows=len(results),
-            query_time=getattr(response, 'qtime', None),
+            query_time=getattr(response, "qtime", None),
             facets=facets if facets else None,
-            suggestions=suggestions if suggestions else None
+            suggestions=suggestions if suggestions else None,
         )
 
     def close(self) -> None:

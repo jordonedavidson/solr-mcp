@@ -13,7 +13,7 @@ from solr_mcp_server.config import Config, SOLRConfig, MCPConfig
 @pytest.fixture
 def temp_env_file():
     """Create a temporary .env file for testing."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.env', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
         env_content = """
 SOLR_BASE_URL=http://localhost:8983/solr
 SOLR_COLLECTION=test_collection
@@ -27,9 +27,9 @@ LOG_LEVEL=INFO
         """
         f.write(env_content.strip())
         temp_file = f.name
-    
+
     yield Path(temp_file)
-    
+
     # Cleanup
     os.unlink(temp_file)
 
@@ -43,15 +43,11 @@ def test_config():
         username="test_user",
         password="test_pass",
         timeout=30,
-        verify_ssl=False
+        verify_ssl=False,
     )
-    
-    mcp_config = MCPConfig(
-        host="localhost",
-        port=8080,
-        log_level="INFO"
-    )
-    
+
+    mcp_config = MCPConfig(host="localhost", port=8080, log_level="INFO")
+
     return Config(solr=solr_config, mcp=mcp_config)
 
 
@@ -62,10 +58,7 @@ def mock_solr_response():
         "responseHeader": {
             "status": 0,
             "QTime": 15,
-            "params": {
-                "q": "test query",
-                "wt": "json"
-            }
+            "params": {"q": "test query", "wt": "json"},
         },
         "response": {
             "numFound": 2,
@@ -77,7 +70,7 @@ def mock_solr_response():
                     "title": ["Test Document 1"],
                     "content": ["This is test content for document 1"],
                     "category": ["books"],
-                    "author": ["John Doe"]
+                    "author": ["John Doe"],
                 },
                 {
                     "id": "doc2",
@@ -85,40 +78,29 @@ def mock_solr_response():
                     "title": ["Test Document 2"],
                     "content": ["This is test content for document 2"],
                     "category": ["articles"],
-                    "author": ["Jane Smith"]
-                }
-            ]
+                    "author": ["Jane Smith"],
+                },
+            ],
         },
         "facet_counts": {
             "facet_fields": {
-                "category": [
-                    "books", 5,
-                    "articles", 3,
-                    "papers", 1
-                ],
-                "author": [
-                    "John Doe", 4,
-                    "Jane Smith", 2
-                ]
+                "category": ["books", 5, "articles", 3, "papers", 1],
+                "author": ["John Doe", 4, "Jane Smith", 2],
             }
         },
         "highlighting": {
             "doc1": {
                 "title": ["<mark>Test</mark> Document 1"],
-                "content": ["This is <mark>test</mark> content"]
+                "content": ["This is <mark>test</mark> content"],
             },
             "doc2": {
                 "title": ["<mark>Test</mark> Document 2"],
-                "content": ["This is <mark>test</mark> content"]
-            }
+                "content": ["This is <mark>test</mark> content"],
+            },
         },
         "spellcheck": {
-            "suggestions": {
-                "tset": {
-                    "suggestion": ["test", "tests", "testing"]
-                }
-            }
-        }
+            "suggestions": {"tset": {"suggestion": ["test", "tests", "testing"]}}
+        },
     }
 
 
@@ -128,23 +110,33 @@ def clean_env_vars():
     # Store original environment variables
     original_env = {}
     env_vars_to_clean = [
-        'SOLR_BASE_URL', 'SOLR_COLLECTION', 'SOLR_USERNAME', 'SOLR_PASSWORD',
-        'SOLR_TIMEOUT', 'SOLR_VERIFY_SSL', 'SOLR_MAX_ROWS',
-        'SOLR_DEFAULT_SEARCH_FIELD', 'SOLR_FACET_LIMIT', 'SOLR_HIGHLIGHT_ENABLED',
-        'MCP_SERVER_HOST', 'MCP_SERVER_PORT', 'LOG_LEVEL',
-        'OLLAMA_BASE_URL', 'OLLAMA_MODEL'
+        "SOLR_BASE_URL",
+        "SOLR_COLLECTION",
+        "SOLR_USERNAME",
+        "SOLR_PASSWORD",
+        "SOLR_TIMEOUT",
+        "SOLR_VERIFY_SSL",
+        "SOLR_MAX_ROWS",
+        "SOLR_DEFAULT_SEARCH_FIELD",
+        "SOLR_FACET_LIMIT",
+        "SOLR_HIGHLIGHT_ENABLED",
+        "MCP_SERVER_HOST",
+        "MCP_SERVER_PORT",
+        "LOG_LEVEL",
+        "OLLAMA_BASE_URL",
+        "OLLAMA_MODEL",
     ]
-    
+
     for var in env_vars_to_clean:
         if var in os.environ:
             original_env[var] = os.environ[var]
         os.environ.pop(var, None)
-    
+
     yield
-    
+
     # Restore original environment variables
     for var in env_vars_to_clean:
         os.environ.pop(var, None)
-    
+
     for var, value in original_env.items():
         os.environ[var] = value

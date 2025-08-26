@@ -16,7 +16,7 @@ from solr_mcp_server.solr_client import (
     SearchResult,
     SearchResponse,
     FacetField,
-    FacetValue
+    FacetValue,
 )
 
 
@@ -27,7 +27,7 @@ def solr_config():
         base_url="http://localhost:8983/solr",
         collection="test_collection",
         timeout=30,
-        verify_ssl=True
+        verify_ssl=True,
     )
 
 
@@ -42,7 +42,7 @@ def mock_solr():
 class TestSOLRClient:
     """Test cases for SOLR client."""
 
-    @patch('solr_mcp_server.solr_client.pysolr.Solr')
+    @patch("solr_mcp_server.solr_client.pysolr.Solr")
     def test_init_success(self, mock_solr_class, solr_config):
         """Test successful SOLR client initialization."""
         mock_solr_instance = Mock()
@@ -55,17 +55,17 @@ class TestSOLRClient:
             "http://localhost:8983/solr/test_collection/",
             auth=None,
             timeout=30,
-            verify=True
+            verify=True,
         )
         mock_solr_instance.ping.assert_called_once()
         assert client.config == solr_config
 
-    @patch('solr_mcp_server.solr_client.pysolr.Solr')
+    @patch("solr_mcp_server.solr_client.pysolr.Solr")
     def test_init_with_auth(self, mock_solr_class, solr_config):
         """Test SOLR client initialization with authentication."""
         solr_config.username = "test_user"
         solr_config.password = "test_pass"
-        
+
         mock_solr_instance = Mock()
         mock_solr_instance.ping.return_value = True
         mock_solr_class.return_value = mock_solr_instance
@@ -76,10 +76,10 @@ class TestSOLRClient:
             "http://localhost:8983/solr/test_collection/",
             auth=("test_user", "test_pass"),
             timeout=30,
-            verify=True
+            verify=True,
         )
 
-    @patch('solr_mcp_server.solr_client.pysolr.Solr')
+    @patch("solr_mcp_server.solr_client.pysolr.Solr")
     def test_init_connection_failure(self, mock_solr_class, solr_config):
         """Test SOLR client initialization with connection failure."""
         mock_solr_instance = Mock()
@@ -91,7 +91,7 @@ class TestSOLRClient:
 
     def test_ping_success(self, solr_config, mock_solr):
         """Test successful ping."""
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
             result = client.ping()
             assert result is True
@@ -99,10 +99,12 @@ class TestSOLRClient:
     def test_ping_failure(self, solr_config, mock_solr):
         """Test ping failure."""
         mock_solr.ping.side_effect = Exception("Ping failed")
-        
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
-            mock_solr.ping.side_effect = Exception("Ping failed")  # Reset for second call
+            mock_solr.ping.side_effect = Exception(
+                "Ping failed"
+            )  # Reset for second call
             result = client.ping()
             assert result is False
 
@@ -111,8 +113,18 @@ class TestSOLRClient:
         # Mock SOLR response
         mock_response = Mock()
         mock_response.docs = [
-            {"id": "doc1", "score": 1.5, "title": "Test Document 1", "content": "Some content"},
-            {"id": "doc2", "score": 1.2, "title": "Test Document 2", "content": "More content"}
+            {
+                "id": "doc1",
+                "score": 1.5,
+                "title": "Test Document 1",
+                "content": "Some content",
+            },
+            {
+                "id": "doc2",
+                "score": 1.2,
+                "title": "Test Document 2",
+                "content": "More content",
+            },
         ]
         mock_response.hits = 2
         mock_response.start = 0
@@ -120,18 +132,18 @@ class TestSOLRClient:
         mock_response.highlighting = None
         mock_response.facets = None
         mock_response.spellcheck = None
-        
+
         mock_solr.search.return_value = mock_response
-        
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
             response = client.search("test query")
-            
+
             assert len(response.results) == 2
             assert response.total_found == 2
             assert response.start == 0
             assert response.query_time == 15
-            
+
             # Check first result
             assert response.results[0].id == "doc1"
             assert response.results[0].score == 1.5
@@ -148,24 +160,24 @@ class TestSOLRClient:
         mock_response.highlighting = None
         mock_response.facets = None
         mock_response.spellcheck = None
-        
+
         mock_solr.search.return_value = mock_response
-        
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
-            
+
             response = client.search(
                 query="advanced query",
                 fields=["title", "content"],
                 start=10,
                 rows=20,
                 sort="score desc",
-                filters=["type:document", "status:published"]
+                filters=["type:document", "status:published"],
             )
-            
+
             mock_solr.search.assert_called_once()
             call_args = mock_solr.search.call_args[1]
-            
+
             assert call_args["q"] == "advanced query"
             assert call_args["fl"] == "title,content"
             assert call_args["start"] == 10
@@ -180,28 +192,25 @@ class TestSOLRClient:
         mock_response.hits = 0
         mock_response.highlighting = None
         mock_response.spellcheck = None
-        
+
         # Mock facet response
         mock_response.facets = {
             "facet_fields": {
                 "category": ["books", 5, "articles", 3, "papers", 1],
-                "author": ["smith", 4, "jones", 2]
+                "author": ["smith", 4, "jones", 2],
             }
         }
-        
+
         mock_solr.search.return_value = mock_response
-        
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
-            
-            response = client.search(
-                query="*:*",
-                facet_fields=["category", "author"]
-            )
-            
+
+            response = client.search(query="*:*", facet_fields=["category", "author"])
+
             assert response.facets is not None
             assert len(response.facets) == 2
-            
+
             # Check category facet
             category_facet = next(f for f in response.facets if f.name == "category")
             assert len(category_facet.values) == 3
@@ -216,45 +225,43 @@ class TestSOLRClient:
         mock_response.highlighting = {
             "doc1": {
                 "title": ["<mark>Test</mark> Document"],
-                "content": ["This is a <mark>test</mark> document"]
+                "content": ["This is a <mark>test</mark> document"],
             }
         }
         mock_response.facets = None
         mock_response.spellcheck = None
-        
+
         mock_solr.search.return_value = mock_response
-        
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
-            
+
             response = client.search(
-                query="test",
-                highlight_fields=["title", "content"]
+                query="test", highlight_fields=["title", "content"]
             )
-            
+
             assert len(response.results) == 1
             assert response.results[0].highlighting is not None
             assert "title" in response.results[0].highlighting
-            assert "<mark>Test</mark> Document" in response.results[0].highlighting["title"]
+            assert (
+                "<mark>Test</mark> Document"
+                in response.results[0].highlighting["title"]
+            )
 
     def test_suggest_query(self, solr_config, mock_solr):
         """Test query suggestions."""
         mock_response = Mock()
         mock_response.spellcheck = {
-            "suggestions": {
-                "documnt": {
-                    "suggestion": ["document", "documents"]
-                }
-            }
+            "suggestions": {"documnt": {"suggestion": ["document", "documents"]}}
         }
-        
+
         mock_solr.search.return_value = mock_response
-        
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
-            
+
             suggestions = client.suggest_query("documnt")
-            
+
             assert "documnt" in suggestions
             assert "document" in suggestions["documnt"]
             assert "documents" in suggestions["documnt"]
@@ -265,14 +272,14 @@ class TestSOLRClient:
         mock_response.docs = [
             {"id": "doc1", "title": "Test", "content": "Content", "category": "book"}
         ]
-        
+
         mock_solr.search.return_value = mock_response
-        
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
-            
+
             fields = client.get_schema_fields()
-            
+
             assert "id" in fields
             assert "title" in fields
             assert "content" in fields
@@ -282,14 +289,14 @@ class TestSOLRClient:
         """Test getting collection statistics."""
         mock_response = Mock()
         mock_response.hits = 1000
-        
+
         mock_solr.search.return_value = mock_response
-        
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
-            
+
             stats = client.get_collection_stats()
-            
+
             assert stats["total_documents"] == 1000
             assert stats["collection_name"] == "test_collection"
             assert stats["solr_url"] == "http://localhost:8983/solr"
@@ -297,33 +304,33 @@ class TestSOLRClient:
     def test_search_solr_error(self, solr_config, mock_solr):
         """Test search with SOLR error."""
         mock_solr.search.side_effect = pysolr.SolrError("SOLR query failed")
-        
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
-            
+
             with pytest.raises(SOLRQueryError, match="SOLR query failed"):
                 client.search("test query")
 
     def test_search_unexpected_error(self, solr_config, mock_solr):
         """Test search with unexpected error."""
         mock_solr.search.side_effect = Exception("Unexpected error")
-        
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
-            
+
             with pytest.raises(SOLRQueryError, match="Unexpected error during search"):
                 client.search("test query")
 
     def test_context_manager(self, solr_config, mock_solr):
         """Test using SOLR client as context manager."""
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             with SOLRClient(solr_config) as client:
                 assert client.config == solr_config
             # Should not raise any errors
 
     def test_close(self, solr_config, mock_solr):
         """Test closing SOLR client."""
-        with patch('solr_mcp_server.solr_client.pysolr.Solr', return_value=mock_solr):
+        with patch("solr_mcp_server.solr_client.pysolr.Solr", return_value=mock_solr):
             client = SOLRClient(solr_config)
             client.close()
             assert client._solr is None
@@ -338,9 +345,9 @@ class TestSearchResultModels:
             id="doc1",
             score=1.5,
             fields={"title": "Test", "content": "Content"},
-            highlighting={"title": ["<mark>Test</mark>"]}
+            highlighting={"title": ["<mark>Test</mark>"]},
         )
-        
+
         assert result.id == "doc1"
         assert result.score == 1.5
         assert result.fields["title"] == "Test"
@@ -349,7 +356,7 @@ class TestSearchResultModels:
     def test_facet_value_creation(self):
         """Test FacetValue creation."""
         facet_value = FacetValue(value="books", count=5)
-        
+
         assert facet_value.value == "books"
         assert facet_value.count == 5
 
@@ -357,10 +364,10 @@ class TestSearchResultModels:
         """Test FacetField creation."""
         facet_values = [
             FacetValue(value="books", count=5),
-            FacetValue(value="articles", count=3)
+            FacetValue(value="articles", count=3),
         ]
         facet_field = FacetField(name="category", values=facet_values)
-        
+
         assert facet_field.name == "category"
         assert len(facet_field.values) == 2
         assert facet_field.values[0].value == "books"
@@ -368,8 +375,10 @@ class TestSearchResultModels:
     def test_search_response_creation(self):
         """Test SearchResponse creation."""
         results = [SearchResult(id="doc1", fields={"title": "Test"})]
-        facets = [FacetField(name="category", values=[FacetValue(value="books", count=5)])]
-        
+        facets = [
+            FacetField(name="category", values=[FacetValue(value="books", count=5)])
+        ]
+
         response = SearchResponse(
             results=results,
             total_found=1,
@@ -377,9 +386,9 @@ class TestSearchResultModels:
             rows=1,
             query_time=15,
             facets=facets,
-            suggestions={"test": ["tests", "testing"]}
+            suggestions={"test": ["tests", "testing"]},
         )
-        
+
         assert len(response.results) == 1
         assert response.total_found == 1
         assert response.query_time == 15

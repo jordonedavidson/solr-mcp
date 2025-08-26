@@ -21,20 +21,20 @@ from .server import run_server
 def setup_logging(log_level: str) -> None:
     """
     Set up logging configuration.
-    
+
     Args:
         log_level: The logging level to use.
     """
     logging.basicConfig(
         level=getattr(logging, log_level.upper()),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
-    
+
     # Set specific loggers to appropriate levels
-    logging.getLogger('pysolr').setLevel(logging.WARNING)
-    logging.getLogger('urllib3').setLevel(logging.WARNING)
-    logging.getLogger('httpx').setLevel(logging.WARNING)
+    logging.getLogger("pysolr").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
 def create_arg_parser() -> argparse.ArgumentParser:
@@ -59,64 +59,58 @@ Environment Variables:
   MCP_SERVER_HOST        - MCP server host (default: localhost)
   MCP_SERVER_PORT        - MCP server port (default: 8080)
   LOG_LEVEL              - Logging level (default: INFO)
-        """
+        """,
     )
-    
+
     parser.add_argument(
         "--env-file",
         type=Path,
-        help="Path to .env file (default: .env in current directory)"
+        help="Path to .env file (default: .env in current directory)",
     )
-    
+
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        help="Override log level from configuration"
+        help="Override log level from configuration",
     )
-    
+
     parser.add_argument(
-        "--validate-config",
-        action="store_true",
-        help="Validate configuration and exit"
+        "--validate-config", action="store_true", help="Validate configuration and exit"
     )
-    
-    parser.add_argument(
-        "--version",
-        action="version",
-        version="%(prog)s 1.0.0"
-    )
-    
+
+    parser.add_argument("--version", action="version", version="%(prog)s 1.0.0")
+
     return parser
 
 
 async def main_async(
     env_file: Optional[Path] = None,
     log_level_override: Optional[str] = None,
-    validate_only: bool = False
+    validate_only: bool = False,
 ) -> int:
     """
     Async main function.
-    
+
     Args:
         env_file: Optional path to .env file.
         log_level_override: Optional log level override.
         validate_only: If True, validate configuration and exit.
-    
+
     Returns:
         Exit code (0 for success, non-zero for error).
     """
     try:
         # Load configuration
         config = get_config(env_file)
-        
+
         # Override log level if specified
         if log_level_override:
             config.mcp.log_level = log_level_override.upper()
-        
+
         # Set up logging
         setup_logging(config.mcp.log_level)
         logger = logging.getLogger(__name__)
-        
+
         if validate_only:
             logger.info("Configuration validation successful!")
             logger.info(f"SOLR Collection: {config.solr.collection}")
@@ -125,39 +119,38 @@ async def main_async(
             if config.ollama:
                 logger.info(f"Ollama: {config.ollama.base_url} ({config.ollama.model})")
             return 0
-        
+
         logger.info("Starting SOLR MCP Server...")
         logger.info(f"SOLR Collection: {config.solr.collection}")
         logger.info(f"SOLR URL: {config.solr.base_url}")
-        
+
         # Set up graceful shutdown
         shutdown_event = asyncio.Event()
-        
+
         def signal_handler(signum: int, frame) -> None:
             logger.info(f"Received signal {signum}, initiating graceful shutdown...")
             shutdown_event.set()
-        
+
         # Register signal handlers
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
-        
+
         # Run the server with proper error handling and recovery
         max_retries = 3
         retry_delay = 5.0
-        
+
         for attempt in range(max_retries):
             try:
                 server_task = asyncio.create_task(run_server(config))
                 shutdown_task = asyncio.create_task(shutdown_event.wait())
-                
+
                 logger.info(f"Starting server (attempt {attempt + 1}/{max_retries})...")
-                
+
                 # Wait for either the server to complete or shutdown signal
                 done, pending = await asyncio.wait(
-                    [server_task, shutdown_task],
-                    return_when=asyncio.FIRST_COMPLETED
+                    [server_task, shutdown_task], return_when=asyncio.FIRST_COMPLETED
                 )
-                
+
                 # If shutdown was requested, cancel server and exit cleanly
                 if shutdown_task in done:
                     logger.info("Shutdown requested, stopping server...")
@@ -167,7 +160,7 @@ async def main_async(
                     except (asyncio.CancelledError, asyncio.TimeoutError):
                         pass
                     break
-                
+
                 # If server completed, check for errors
                 if server_task in done:
                     try:
@@ -177,33 +170,33 @@ async def main_async(
                         break
                     except Exception as e:
                         logger.error(f"Server error on attempt {attempt + 1}: {e}")
-                        
+
                         # Cancel shutdown task
                         shutdown_task.cancel()
                         try:
                             await shutdown_task
                         except asyncio.CancelledError:
                             pass
-                        
+
                         # If this was the last attempt, give up
                         if attempt == max_retries - 1:
                             logger.error("Maximum retry attempts exceeded")
                             return 1
-                        
+
                         # Wait before retry
                         logger.info(f"Retrying in {retry_delay} seconds...")
                         await asyncio.sleep(retry_delay)
                         retry_delay *= 1.5  # Exponential backoff
-                        
+
             except Exception as e:
                 logger.error(f"Unexpected error on attempt {attempt + 1}: {e}")
                 if attempt == max_retries - 1:
                     return 1
                 await asyncio.sleep(retry_delay)
-        
+
         logger.info("SOLR MCP Server shutdown completed")
         return 0
-        
+
     except KeyboardInterrupt:
         print("\nShutdown requested by user")
         return 0
@@ -216,14 +209,16 @@ def main() -> None:
     """Main entry point for the command-line interface."""
     parser = create_arg_parser()
     args = parser.parse_args()
-    
+
     # Run the async main function
-    exit_code = asyncio.run(main_async(
-        env_file=args.env_file,
-        log_level_override=args.log_level,
-        validate_only=args.validate_config
-    ))
-    
+    exit_code = asyncio.run(
+        main_async(
+            env_file=args.env_file,
+            log_level_override=args.log_level,
+            validate_only=args.validate_config,
+        )
+    )
+
     sys.exit(exit_code)
 
 

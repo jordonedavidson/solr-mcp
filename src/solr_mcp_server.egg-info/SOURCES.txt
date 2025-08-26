@@ -1,6 +1,7 @@
 README.md
 pyproject.toml
 src/solr_mcp_server/__init__.py
+src/solr_mcp_server/__main__.py
 src/solr_mcp_server/config.py
 src/solr_mcp_server/main.py
 src/solr_mcp_server/server.py

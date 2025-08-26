@@ -63,24 +63,24 @@ class SOLRMCPServer:
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "Search query string"
+                                "description": "Search query string",
                             },
                             "rows": {
                                 "type": "integer",
                                 "description": "Number of results to return (max 1000)",
                                 "minimum": 1,
                                 "maximum": 1000,
-                                "default": 10
+                                "default": 10,
                             },
                             "start": {
                                 "type": "integer",
                                 "description": "Starting offset for pagination",
                                 "minimum": 0,
-                                "default": 0
-                            }
+                                "default": 0,
+                            },
                         },
-                        "required": ["query"]
-                    }
+                        "required": ["query"],
+                    },
                 ),
                 ToolDefinition(
                     name="advanced_search",
@@ -90,41 +90,37 @@ class SOLRMCPServer:
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "Search query string"
+                                "description": "Search query string",
                             },
                             "query_fields": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "List of fields to search in (qf parameters)"
+                                "description": "List of fields to search in (qf parameters)",
                             },
                             "fields": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "List of fields to return"
+                                "description": "List of fields to return",
                             },
                             "filters": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "List of filter queries (fq parameters)"
+                                "description": "List of filter queries (fq parameters)",
                             },
                             "sort": {
                                 "type": "string",
-                                "description": "Sort specification (e.g., 'score desc', 'date asc')"
+                                "description": "Sort specification (e.g., 'score desc', 'date asc')",
                             },
                             "rows": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 1000,
-                                "default": 10
+                                "default": 10,
                             },
-                            "start": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "default": 0
-                            }
+                            "start": {"type": "integer", "minimum": 0, "default": 0},
                         },
-                        "required": ["query"]
-                    }
+                        "required": ["query"],
+                    },
                 ),
                 ToolDefinition(
                     name="faceted_search",
@@ -134,27 +130,27 @@ class SOLRMCPServer:
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "Search query string"
+                                "description": "Search query string",
                             },
                             "facet_fields": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "List of fields to facet on"
+                                "description": "List of fields to facet on",
                             },
                             "filters": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "List of filter queries"
+                                "description": "List of filter queries",
                             },
                             "rows": {
                                 "type": "integer",
                                 "minimum": 0,
                                 "maximum": 1000,
-                                "default": 10
-                            }
+                                "default": 10,
+                            },
                         },
-                        "required": ["query", "facet_fields"]
-                    }
+                        "required": ["query", "facet_fields"],
+                    },
                 ),
                 ToolDefinition(
                     name="search_with_highlighting",
@@ -164,27 +160,23 @@ class SOLRMCPServer:
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "Search query string"
+                                "description": "Search query string",
                             },
                             "highlight_fields": {
                                 "type": "array",
                                 "items": {"type": "string"},
-                                "description": "Fields to highlight (empty for all fields)"
+                                "description": "Fields to highlight (empty for all fields)",
                             },
                             "rows": {
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 1000,
-                                "default": 10
+                                "default": 10,
                             },
-                            "start": {
-                                "type": "integer",
-                                "minimum": 0,
-                                "default": 0
-                            }
+                            "start": {"type": "integer", "minimum": 0, "default": 0},
                         },
-                        "required": ["query"]
-                    }
+                        "required": ["query"],
+                    },
                 ),
                 ToolDefinition(
                     name="get_suggestions",
@@ -194,47 +186,40 @@ class SOLRMCPServer:
                         "properties": {
                             "query": {
                                 "type": "string",
-                                "description": "Query to get suggestions for"
+                                "description": "Query to get suggestions for",
                             },
                             "count": {
                                 "type": "integer",
                                 "description": "Maximum number of suggestions",
                                 "minimum": 1,
                                 "maximum": 20,
-                                "default": 5
-                            }
+                                "default": 5,
+                            },
                         },
-                        "required": ["query"]
-                    }
+                        "required": ["query"],
+                    },
                 ),
                 ToolDefinition(
                     name="get_schema_fields",
                     description="Get available fields in the SOLR schema",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {}
-                    }
+                    inputSchema={"type": "object", "properties": {}},
                 ),
                 ToolDefinition(
                     name="get_collection_stats",
                     description="Get basic statistics about the SOLR collection",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {}
-                    }
+                    inputSchema={"type": "object", "properties": {}},
                 ),
                 ToolDefinition(
                     name="ping_solr",
                     description="Test SOLR connection",
-                    inputSchema={
-                        "type": "object",
-                        "properties": {}
-                    }
-                )
+                    inputSchema={"type": "object", "properties": {}},
+                ),
             ]
 
         @self.server.call_tool()
-        async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[TextContent]:
+        async def handle_call_tool(
+            name: str, arguments: Dict[str, Any]
+        ) -> List[TextContent]:
             """Handle tool calls."""
             try:
                 if name == "search":
@@ -254,16 +239,19 @@ class SOLRMCPServer:
                 elif name == "ping_solr":
                     return await self._handle_ping_solr(arguments)
                 else:
-                    raise McpError(ErrorData(code=INVALID_PARAMS,
-                                   message=f"Unknown tool: {name}"))
+                    raise McpError(
+                        ErrorData(code=INVALID_PARAMS, message=f"Unknown tool: {name}")
+                    )
             except SOLRClientError as e:
                 logger.error(f"SOLR error in tool {name}: {e}")
-                raise McpError(ErrorData(code=INTERNAL_ERROR,
-                               message=f"SOLR error: {str(e)}"))
+                raise McpError(
+                    ErrorData(code=INTERNAL_ERROR, message=f"SOLR error: {str(e)}")
+                )
             except Exception as e:
                 logger.error(f"Unexpected error in tool {name}: {e}")
-                raise McpError(ErrorData(code=INTERNAL_ERROR,
-                               message=f"Internal error: {str(e)}"))
+                raise McpError(
+                    ErrorData(code=INTERNAL_ERROR, message=f"Internal error: {str(e)}")
+                )
 
     async def _handle_search(self, arguments: Dict[str, Any]) -> List[TextContent]:
         """Handle basic search requests."""
@@ -272,8 +260,9 @@ class SOLRMCPServer:
         start = arguments.get("start", 0)
 
         if not query:
-            raise McpError(ErrorData(code=INVALID_PARAMS,
-                           message="Query parameter is required"))
+            raise McpError(
+                ErrorData(code=INVALID_PARAMS, message="Query parameter is required")
+            )
 
         response = self.solr_client.search(query=query, rows=rows, start=start)
 
@@ -283,21 +272,18 @@ class SOLRMCPServer:
             "rows": response.rows,
             "query_time": response.query_time,
             "results": [
-                {
-                    "id": result.id,
-                    "score": result.score,
-                    "fields": result.fields
-                }
+                {"id": result.id, "score": result.score, "fields": result.fields}
                 for result in response.results
-            ]
+            ],
         }
 
-        return [TextContent(
-            type="text",
-            text=json.dumps(result, indent=2, default=str)
-        )]
+        return [
+            TextContent(type="text", text=json.dumps(result, indent=2, default=str))
+        ]
 
-    async def _handle_advanced_search(self, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def _handle_advanced_search(
+        self, arguments: Dict[str, Any]
+    ) -> List[TextContent]:
         """Handle advanced search requests."""
         query = arguments.get("query")
         default_field = arguments.get("default_field")
@@ -308,8 +294,9 @@ class SOLRMCPServer:
         start = arguments.get("start", 0)
 
         if not query:
-            raise McpError(ErrorData(code=INVALID_PARAMS,
-                           message="Query parameter is required"))
+            raise McpError(
+                ErrorData(code=INVALID_PARAMS, message="Query parameter is required")
+            )
 
         response = self.solr_client.search(
             query=query,
@@ -318,7 +305,7 @@ class SOLRMCPServer:
             filters=filters,
             sort=sort,
             rows=rows,
-            start=start
+            start=start,
         )
 
         result = {
@@ -327,21 +314,18 @@ class SOLRMCPServer:
             "rows": response.rows,
             "query_time": response.query_time,
             "results": [
-                {
-                    "id": result.id,
-                    "score": result.score,
-                    "fields": result.fields
-                }
+                {"id": result.id, "score": result.score, "fields": result.fields}
                 for result in response.results
-            ]
+            ],
         }
 
-        return [TextContent(
-            type="text",
-            text=json.dumps(result, indent=2, default=str)
-        )]
+        return [
+            TextContent(type="text", text=json.dumps(result, indent=2, default=str))
+        ]
 
-    async def _handle_faceted_search(self, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def _handle_faceted_search(
+        self, arguments: Dict[str, Any]
+    ) -> List[TextContent]:
         """Handle faceted search requests."""
         query = arguments.get("query")
         facet_fields = arguments.get("facet_fields")
@@ -350,13 +334,14 @@ class SOLRMCPServer:
 
         if not query or not facet_fields:
             raise McpError(
-                ErrorData(code=INVALID_PARAMS, message="Query and facet_fields parameters are required"))
+                ErrorData(
+                    code=INVALID_PARAMS,
+                    message="Query and facet_fields parameters are required",
+                )
+            )
 
         response = self.solr_client.search(
-            query=query,
-            filters=filters,
-            facet_fields=facet_fields,
-            rows=rows
+            query=query, filters=filters, facet_fields=facet_fields, rows=rows
         )
 
         result = {
@@ -366,28 +351,24 @@ class SOLRMCPServer:
                 {
                     "field": facet.name,
                     "values": [
-                        {"value": fv.value, "count": fv.count}
-                        for fv in facet.values
-                    ]
+                        {"value": fv.value, "count": fv.count} for fv in facet.values
+                    ],
                 }
                 for facet in response.facets or []
             ],
             "results": [
-                {
-                    "id": result.id,
-                    "score": result.score,
-                    "fields": result.fields
-                }
+                {"id": result.id, "score": result.score, "fields": result.fields}
                 for result in response.results
-            ]
+            ],
         }
 
-        return [TextContent(
-            type="text",
-            text=json.dumps(result, indent=2, default=str)
-        )]
+        return [
+            TextContent(type="text", text=json.dumps(result, indent=2, default=str))
+        ]
 
-    async def _handle_search_with_highlighting(self, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def _handle_search_with_highlighting(
+        self, arguments: Dict[str, Any]
+    ) -> List[TextContent]:
         """Handle search with highlighting requests."""
         query = arguments.get("query")
         highlight_fields = arguments.get("highlight_fields")
@@ -395,14 +376,12 @@ class SOLRMCPServer:
         start = arguments.get("start", 0)
 
         if not query:
-            raise McpError(ErrorData(code=INVALID_PARAMS,
-                           message="Query parameter is required"))
+            raise McpError(
+                ErrorData(code=INVALID_PARAMS, message="Query parameter is required")
+            )
 
         response = self.solr_client.search(
-            query=query,
-            highlight_fields=highlight_fields,
-            rows=rows,
-            start=start
+            query=query, highlight_fields=highlight_fields, rows=rows, start=start
         )
 
         result = {
@@ -415,50 +394,51 @@ class SOLRMCPServer:
                     "id": result.id,
                     "score": result.score,
                     "fields": result.fields,
-                    "highlighting": result.highlighting
+                    "highlighting": result.highlighting,
                 }
                 for result in response.results
-            ]
+            ],
         }
 
-        return [TextContent(
-            type="text",
-            text=json.dumps(result, indent=2, default=str)
-        )]
+        return [
+            TextContent(type="text", text=json.dumps(result, indent=2, default=str))
+        ]
 
-    async def _handle_get_suggestions(self, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def _handle_get_suggestions(
+        self, arguments: Dict[str, Any]
+    ) -> List[TextContent]:
         """Handle suggestion requests."""
         query = arguments.get("query")
         count = arguments.get("count", 5)
 
         if not query:
-            raise McpError(ErrorData(code=INVALID_PARAMS,
-                           message="Query parameter is required"))
+            raise McpError(
+                ErrorData(code=INVALID_PARAMS, message="Query parameter is required")
+            )
 
         suggestions = self.solr_client.suggest_query(query, count)
 
-        return [TextContent(
-            type="text",
-            text=json.dumps({"suggestions": suggestions}, indent=2)
-        )]
+        return [
+            TextContent(
+                type="text", text=json.dumps({"suggestions": suggestions}, indent=2)
+            )
+        ]
 
-    async def _handle_get_schema_fields(self, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def _handle_get_schema_fields(
+        self, arguments: Dict[str, Any]
+    ) -> List[TextContent]:
         """Handle schema fields requests."""
         fields = self.solr_client.get_schema_fields()
 
-        return [TextContent(
-            type="text",
-            text=json.dumps({"fields": fields}, indent=2)
-        )]
+        return [TextContent(type="text", text=json.dumps({"fields": fields}, indent=2))]
 
-    async def _handle_get_collection_stats(self, arguments: Dict[str, Any]) -> List[TextContent]:
+    async def _handle_get_collection_stats(
+        self, arguments: Dict[str, Any]
+    ) -> List[TextContent]:
         """Handle collection statistics requests."""
         stats = self.solr_client.get_collection_stats()
 
-        return [TextContent(
-            type="text",
-            text=json.dumps(stats, indent=2)
-        )]
+        return [TextContent(type="text", text=json.dumps(stats, indent=2))]
 
     async def _handle_ping_solr(self, arguments: Dict[str, Any]) -> List[TextContent]:
         """Handle SOLR ping requests."""
@@ -467,26 +447,26 @@ class SOLRMCPServer:
         result = {
             "status": "healthy" if is_healthy else "unhealthy",
             "collection": self.config.solr.collection,
-            "solr_url": self.config.solr.base_url
+            "solr_url": self.config.solr.base_url,
         }
 
-        return [TextContent(
-            type="text",
-            text=json.dumps(result, indent=2)
-        )]
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
     async def run(self) -> None:
         """Run the MCP server."""
         logger.info(
-            f"Starting SOLR MCP Server for collection: {self.config.solr.collection}")
+            f"Starting SOLR MCP Server for collection: {self.config.solr.collection}"
+        )
 
         # Test SOLR connection before starting
         if not self.solr_client.ping():
             raise RuntimeError(
-                "Failed to connect to SOLR. Please check your configuration.")
+                "Failed to connect to SOLR. Please check your configuration."
+            )
 
         # Check if STDIN is available for MCP communication
         import sys
+
         if sys.stdin.isatty():
             raise RuntimeError(
                 "This MCP server requires STDIN for communication.\n"
@@ -508,11 +488,7 @@ class SOLRMCPServer:
             )
 
             await self.server.run(
-                read_stream,
-                write_stream,
-                initialization_options,
-                False,
-                True
+                read_stream, write_stream, initialization_options, False, True
             )
 
     def cleanup(self) -> None:
