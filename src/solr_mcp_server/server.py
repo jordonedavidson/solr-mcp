@@ -92,6 +92,11 @@ class SOLRMCPServer:
                                 "type": "string",
                                 "description": "Search query string"
                             },
+                            "query_fields": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "description": "List of fields to search in (qf parameters)"
+                            },
                             "fields": {
                                 "type": "array",
                                 "items": {"type": "string"},
@@ -295,6 +300,7 @@ class SOLRMCPServer:
     async def _handle_advanced_search(self, arguments: Dict[str, Any]) -> List[TextContent]:
         """Handle advanced search requests."""
         query = arguments.get("query")
+        default_field = arguments.get("default_field")
         fields = arguments.get("fields")
         filters = arguments.get("filters")
         sort = arguments.get("sort")
@@ -307,6 +313,7 @@ class SOLRMCPServer:
 
         response = self.solr_client.search(
             query=query,
+            default_field=default_field,
             fields=fields,
             filters=filters,
             sort=sort,
